@@ -55,3 +55,34 @@ class storage_engine:
             if key in self.inmemory_storage:
                 return self.inmemory_storage[key]
         return self.segment.search_in_json_segments(key)
+    
+    def cli(self):
+        print("🚀 Welcome to LSM Storage CLI (type 'help' for commands)")
+        while True:
+            cmd = input("lsm> ").strip().split()
+
+            if not cmd:
+                continue
+
+            if cmd[0].lower() == "put" and len(cmd) == 3:
+                print(self.insert_inmemory(cmd[1], cmd[2]))
+
+            elif cmd[0].lower() == "get" and len(cmd) == 2:
+                print(self.find_value(cmd[1]))
+
+            elif cmd[0].lower() == "exit":
+                print("👋 Exiting CLI...")
+                break
+
+            elif cmd[0].lower() == "help":
+                print("Commands:")
+                print("  put <key> <value>  → Insert key/value")
+                print("  get <key>          → Retrieve value")
+                print("  exit               → Quit CLI")
+
+            else:
+                print("❌ Invalid command. Type 'help' for usage.")
+
+if __name__ == '__main__':
+    store = storage_engine()
+    store.cli()
