@@ -1,2 +1,4 @@
 segments/
 segments/*
+wal/
+wal/*

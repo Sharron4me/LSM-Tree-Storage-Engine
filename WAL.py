@@ -31,9 +31,19 @@ class WAL:
                 try:
                     entry = json.loads(line.strip())
                     if entry["op"] == "PUT":
-                        memtable[entry["key"]] = entry["value"]
+                        memtable[entry["key"]] = {
+                            "key": entry["key"],
+                            "value": entry["value"],
+                            "tombstone": False,
+                            "ts": entry["ts"]
+                        }
                     elif entry["op"] == "REMOVE":
-                        memtable.pop(entry["key"], None)
+                        memtable[entry["key"]] = {
+                            "key": entry["key"],
+                            "value": None,
+                            "tombstone": True,
+                            "ts": entry["ts"]
+                        }
                 except Exception:
                     continue
         return memtable

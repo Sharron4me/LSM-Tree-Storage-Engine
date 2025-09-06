@@ -19,17 +19,34 @@ class storage_engine:
         self.segment = Segment()
         self.wal = WAL()
 
-    def insert_inmemory(self, key, val):
+        print("Replaying WAL...")
+        self.inmemory_storage = self.wal.replay()
+        print(f"WAL recovery complete. {len(self.inmemory_storage)} keys restored.")
+
+    def insert_inmemory(self, key, value):
         self.check_capacity_inmemory_storage()
+        entry = {
+        "key": key,
+        "value": value,
+        "tombstone": False,
+        "ts": int(time.time() * 1000)
+        }
         with self.inmemory_lock:
-            self.wal.append("PUT", key, val)
-            self.inmemory_storage[key] = val
-        return 'OK', True
+            self.inmemory_storage[key] = entry
+        self.wal.append("PUT", key, value)
+        return "OK"
 
     def delete_inmemory(self, key):
+        entry = {
+            "key": key,
+            "value": None,
+            "tombstone": True,
+            "ts": int(time.time() * 1000)
+        }
         with self.inmemory_lock:
-            self.wal.append("REMOVE", key)
-            return self.inmemory_storage.pop(key, None), True
+            self.inmemory_storage[key] = entry
+        self.wal.append("DELETE", key)
+        return "DELETED"
 
     def rotate_segment_file(self):
         now = datetime.datetime.now()
@@ -53,8 +70,16 @@ class storage_engine:
     def find_value(self, key):
         with self.inmemory_lock:
             if key in self.inmemory_storage:
-                return self.inmemory_storage[key]
-        return self.segment.search_in_json_segments(key)
+                entry = self.inmemory_storage[key]
+                if entry.get("tombstone", False):
+                    return None
+                return entry.get("value")
+
+        entry = self.segment.search_in_json_segments(key)
+        if entry and not entry.get("tombstone", False):
+            return entry.get("value")
+
+        return None
     
     def background_compaction(self):
         while True:
@@ -79,7 +104,6 @@ class storage_engine:
                 print(self.delete_inmemory(cmd[1]))
 
             elif cmd[0].lower() == "exit":
-                self.rotate_segment_file()
                 print("👋 Exiting CLI...")
                 break
 

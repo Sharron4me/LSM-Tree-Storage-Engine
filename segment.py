@@ -50,6 +50,44 @@ class Segment:
 
         return output_files
 
+    def merge_segments(self):
+        json_files = sorted(self.get_segment_files())
+        merged = {}
+        output_files = []
+
+        for segment_file in json_files:
+            with open(segment_file, "r") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    data = [{"key": k, "value": v, "tombstone": False, "ts": 0} for k, v in data.items()]
+
+                for entry in data:
+                    k, ts = entry["key"], entry.get("ts", 0)
+                    if k not in merged or merged[k]["ts"] < ts:
+                        merged[k] = entry
+
+            if len(json.dumps(merged)) > self.threshold:
+                now = int(datetime.datetime.now().timestamp() * 1000)
+                output_file = os.path.join(self.segment_file_path, f"segment_{now}.json")
+
+                cleaned = [v for v in merged.values() if not v.get("tombstone", False)]
+
+                with open(output_file, "w") as out:
+                    json.dump(cleaned, out, indent=2)
+                output_files.append(output_file)
+
+                merged = {}
+        if merged:
+            now = int(datetime.datetime.now().timestamp() * 1000)
+            output_file = os.path.join(self.segment_file_path, f"segment_{now}.json")
+
+            cleaned = [v for v in merged.values() if not v.get("tombstone", False)]
+            with open(output_file, "w") as out:
+                json.dump(cleaned, out, indent=2)
+            output_files.append(output_file)
+
+        return output_files
+
     def search_in_json_segments(self, key):
         for segment_file in self.get_segment_files():
             bf = build_bloom_from_json(segment_file)
@@ -57,6 +95,11 @@ class Segment:
                 continue
             with open(segment_file, "r") as f:
                 data = json.load(f)
-                if key in data:
-                    return {key: data[key]}, True
-        return None, False
+                if isinstance(data, dict):
+                    if key in data:
+                        return data[key]
+                elif isinstance(data, list):
+                    for entry in data:
+                        if entry["key"] == key:
+                            return entry
+        return None
