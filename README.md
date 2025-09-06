@@ -3,6 +3,16 @@
 A basic implementation of an **LSM-tree (Log-Structured Merge Tree) based storage engine** in Python.  
 This project demonstrates the fundamental concepts behind modern storage engines like **LevelDB, RocksDB, and Cassandra**.
 
+## 🖥️ How to Run? 
+### Install dependencies
+```
+pip install -r requirements.txt
+```
+### Start Cli
+```
+python3 storage.py
+```
+
 ## ✨ Features
 
 - **In-memory storage (memtable)** : Fast writes stored in memory before being flushed to disk.
@@ -20,3 +30,21 @@ This project demonstrates the fundamental concepts behind modern storage engines
 - More efficient Bloom filter tuning (adaptive).
 - WAL file rotation and checkpointing.
 - Multi-threaded background compaction.
+
+### Sample Output
+```
+🚀 Welcome to LSM Storage CLI (type 'help' for commands)
+
+lsm> put a 10
+('OK', True)
+
+lsm> get a
+10
+
+lsm> remove a
+('DELETED', True)
+
+lsm> get a
+None
+```
+
