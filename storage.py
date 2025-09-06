@@ -72,6 +72,7 @@ class storage_engine:
                 print("Commands:")
                 print("  put <key> <value>  → Insert key/value")
                 print("  get <key>          → Retrieve value")
+                print("  remove <key>          → Remove value")
                 print("  exit               → Quit CLI")
 
             else:
