@@ -30,6 +30,8 @@ class storage_engine:
         now = datetime.datetime.now()
         res = int(now.timestamp() * 1000)
         with self.inmemory_lock:
+            if not self.inmemory_storage:
+                return
             segment_file_name = os.path.join(self.segment_file_path, f"segment_{res}.json")
             self.segment_files.append(segment_file_name)
             with open(segment_file_name, 'w') as f:
@@ -71,6 +73,7 @@ class storage_engine:
                 print(self.delete_inmemory(cmd[1]))
 
             elif cmd[0].lower() == "exit":
+                self.rotate_segment_file()
                 print("👋 Exiting CLI...")
                 break
 
