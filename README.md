@@ -5,9 +5,10 @@ This project demonstrates the fundamental concepts behind modern storage engines
 
 ## ✨ Features
 
-- **In-memory storage (memtable)** with configurable threshold  
-- **Segment files (SSTables)** written as JSON on disk  
-- **Bloom Filters** for efficient key lookups  
-- **Compaction & Merge** of segment files  
-- **CLI** for continuous interaction (`put`, `get`, `remove`)  
-- **Background compaction** (runs every 3 hours automatically)
+- **In-memory storage (memtable)** : Fast writes stored in memory before being flushed to disk.
+- **Write-Ahead Log (WAL)** : Ensures durability by logging every operation before applying it to memory. On crash, the WAL is replayed to restore state.
+- **Segment Files** : Immutable on-disk JSON files created when memtable exceeds threshold.
+- **Bloom Filters** : Efficient key existence checks before reading segment files.
+- **Compaction** : Merges multiple segment files, discarding old values and tombstones.
+- **Tombstones** : Deletion markers to handle deletes across immutable segments.
+- **CLI Interface** : Simple shell to interact with the store (put, get, remove).
