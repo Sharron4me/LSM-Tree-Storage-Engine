@@ -1,16 +1,21 @@
 import threading
 import datetime
 import json
+import os
+from dotenv import load_dotenv
+from segment import Segment
 
-from BloomFilter import search_in_json_segments
+load_dotenv()
 
 
 class storage_engine:
     def __init__(self):
         self.inmemory_storage = {}
         self.inmemory_lock = threading.RLock()
-        self.inmemory_max_size = 1000
         self.segment_files = []
+        self.segment_file_path = os.getenv("SEGMENTS_PATH")
+        self.threshold = os.getenv("THRESHOLD")
+        self.segment = Segment()
 
     def insert_inmemory(self, key, val):
         self.inmemory_storage[key] = val
@@ -23,14 +28,14 @@ class storage_engine:
         now = datetime.datetime.now()
         res = int(now.timestamp() * 1000)
         with self.inmemory_lock:
-            segment_file_name = 'segment'+res+'.json'
+            segment_file_name = os.path.join(self.segment_file_path, 'segment_'+res+'.json')
             self.segment_files.append(segment_file_name)
             with open(segment_file_name, 'w') as f:
                 json.dump(self.inmemory_storage, indent=4)
             self.inmemory_storage = {}
     
     def check_capacity_inmemort_storage(self):
-        if len(self.inmemory_storage)>self.inmemory_max_size:
+        if len(self.inmemory_storage)>self.threshold:
             self.store_inmemory()
             return "Overflow", True
         return "No Overflow", True
@@ -49,4 +54,4 @@ class storage_engine:
         with self.inmemory_lock:
             if key in self.inmemory_storage:
                 return self.inmemory_storage[key]
-        return search_in_json_segments(key, self.segment_files)
+        return self.segment.search_in_json_segments(key)

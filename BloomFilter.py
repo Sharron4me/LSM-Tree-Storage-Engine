@@ -29,15 +29,3 @@ def build_bloom_from_json(segment_file, size=5000, hash_count=7):
         for entry in data:
             bf.add(entry["key"])
     return bf
-
-def search_in_json_segments(value, segment_files):
-    for segment_file in segment_files:
-        bf = build_bloom_from_json(segment_file)
-        if not bf.check(value):
-            continue
-        with open(segment_file, "r") as f:
-            data = json.load(f)
-            for entry in data:
-                if entry["key"] == value:
-                    return entry, True
-    return None, False
