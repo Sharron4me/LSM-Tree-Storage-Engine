@@ -1,5 +1,6 @@
 import threading
 import datetime
+import time
 import json
 import os
 from dotenv import load_dotenv
@@ -47,6 +48,11 @@ class storage_engine:
                 return self.inmemory_storage[key]
         return self.segment.search_in_json_segments(key)
     
+    def background_compaction(self):
+        while True:
+            self.segment.merge_segments()
+            time.sleep(3 * 60 * 60)
+
     def cli(self):
         print("🚀 Welcome to LSM Storage CLI (type 'help' for commands)")
         while True:
@@ -80,4 +86,5 @@ class storage_engine:
 
 if __name__ == '__main__':
     store = storage_engine()
+    threading.Thread(target=store.background_compaction, daemon=True).start()
     store.cli()
