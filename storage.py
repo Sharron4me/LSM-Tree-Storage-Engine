@@ -5,7 +5,7 @@ import json
 import os
 from dotenv import load_dotenv
 from segment import Segment
-
+from WAL import WAL
 load_dotenv()
 
 
@@ -17,14 +17,19 @@ class storage_engine:
         self.segment_file_path = os.path.expanduser(os.getenv("SEGMENTS_PATH", "./segments"))
         self.threshold = int(os.getenv("THRESHOLD", 100))
         self.segment = Segment()
+        self.wal = WAL()
 
     def insert_inmemory(self, key, val):
         self.check_capacity_inmemory_storage()
-        self.inmemory_storage[key] = val
+        with self.inmemory_lock:
+            self.wal.append("PUT", key, val)
+            self.inmemory_storage[key] = val
         return 'OK', True
 
     def delete_inmemory(self, key):
-        return self.inmemory_storage.pop(key, None), True
+        with self.inmemory_lock:
+            self.wal.append("REMOVE", key)
+            return self.inmemory_storage.pop(key, None), True
 
     def rotate_segment_file(self):
         now = datetime.datetime.now()
@@ -36,6 +41,7 @@ class storage_engine:
             self.segment_files.append(segment_file_name)
             with open(segment_file_name, 'w') as f:
                 json.dump(self.inmemory_storage, f,indent=4)
+            self.wal.clear()
             self.inmemory_storage = {}
     
     def check_capacity_inmemory_storage(self):
