@@ -12,3 +12,11 @@ This project demonstrates the fundamental concepts behind modern storage engines
 - **Compaction** : Merges multiple segment files, discarding old values and tombstones.
 - **Tombstones** : Deletion markers to handle deletes across immutable segments.
 - **CLI Interface** : Simple shell to interact with the store (put, get, remove).
+
+
+## 📌 ToDo
+- SSTable format with sorted keys.
+- Range queries & prefix scans.
+- More efficient Bloom filter tuning (adaptive).
+- WAL file rotation and checkpointing.
+- Multi-threaded background compaction.
