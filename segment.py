@@ -22,35 +22,6 @@ class Segment:
         return glob.glob(os.path.join(self.segment_file_path, "*.json"))
 
     def merge_segments(self):
-        json_files = self.get_segment_files()
-        merged_data = {}
-        output_files = []
-
-        for segment_file in json_files:
-            with open(segment_file, "r") as f:
-                data = json.load(f)
-                merged_data.update(data)
-
-            if len(json.dumps(merged_data)) > self.threshold:
-                now = datetime.datetime.now()
-                res = str(int(now.timestamp() * 1000))
-                output_file = os.path.join(self.segment_file_path, f"segment_{res}.json")
-                with open(output_file, "w") as out:
-                    json.dump(merged_data, out, indent=2)
-                output_files.append(output_file)
-                merged_data = {}
-
-        if merged_data:
-            now = datetime.datetime.now()
-            res = str(int(now.timestamp() * 1000))
-            output_file = os.path.join(self.segment_file_path, f"segment_{res}.json")
-            with open(output_file, "w") as out:
-                json.dump(merged_data, out, indent=2)
-            output_files.append(output_file)
-
-        return output_files
-
-    def merge_segments(self):
         json_files = sorted(self.get_segment_files())
         merged = {}
         output_files = []
@@ -71,11 +42,9 @@ class Segment:
                 output_file = os.path.join(self.segment_file_path, f"segment_{now}.json")
 
                 cleaned = [v for v in merged.values() if not v.get("tombstone", False)]
-
                 with open(output_file, "w") as out:
                     json.dump(cleaned, out, indent=2)
                 output_files.append(output_file)
-
                 merged = {}
         if merged:
             now = int(datetime.datetime.now().timestamp() * 1000)
@@ -86,6 +55,8 @@ class Segment:
                 json.dump(cleaned, out, indent=2)
             output_files.append(output_file)
 
+        for seg in json_files:
+            os.remove(seg)
         return output_files
 
     def search_in_json_segments(self, key):
